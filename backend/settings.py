@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.cages',
     'apps.sales',
     'apps.users',
+    'apps.colombier',
 ]
 
 MIDDLEWARE = [
