@@ -1,8 +1,9 @@
 # apps/colombier/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from apps.core.ownership import OwnedModel
 
-class ColombierConfig(models.Model):
+class ColombierConfig(OwnedModel):
     nom = models.CharField(
         max_length=200, 
         default='Mon Colombier',

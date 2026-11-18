@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Couple
+from apps.couples.models import Couple
 
 @admin.register(Couple)
 class CoupleAdmin(admin.ModelAdmin):

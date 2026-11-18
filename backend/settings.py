@@ -1,3 +1,8 @@
+"""
+Django settings for PigeonManager - Production Ready
+Déployé sur : Render (Backend) + Vercel (Frontend) + Neon (PostgreSQL)
+"""
+
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -7,24 +12,36 @@ import dj_database_url
 # Charger les variables d'environnement
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# ═══════════════════════════════════════════════════════════
+# SECURITY SETTINGS
+# ═══════════════════════════════════════════════════════════
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-c+!!ku%u+_e^z4mt^aikas0(o%d6_3bmo6u2kg#ii4f3@4)6g1')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY doit être défini dans les variables d'environnement")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Sécurité HTTPS en production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Application definition
+# ═══════════════════════════════════════════════════════════
+# APPLICATIONS
+# ═══════════════════════════════════════════════════════════
 
 INSTALLED_APPS = [
+    # Django core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -32,12 +49,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     
-    # Third party apps
+    # Third party
     'rest_framework',
     'corsheaders',
     'drf_yasg',
     'django_filters',
     'rest_framework_simplejwt',
+    'whitenoise',
     
     # Local apps
     'apps.pigeons',
@@ -47,11 +65,18 @@ INSTALLED_APPS = [
     'apps.sales',
     'apps.users',
     'apps.colombier',
+    'apps.core',
+    'apps.dashboard',
 ]
 
+# ═══════════════════════════════════════════════════════════
+# MIDDLEWARE
+# ═══════════════════════════════════════════════════════════
+
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware (doit être en premier)
-    "django.middleware.security.SecurityMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -80,85 +105,96 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
+# ═══════════════════════════════════════════════════════════
+# DATABASE - PostgreSQL (Neon/Render)
+# ═══════════════════════════════════════════════════════════
 
-# Database - Neon PostgreSQL
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-# Utilisez DATABASE_URL de Neon ou SQLite par défaut
-DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{BASE_DIR}/db.sqlite3')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
+    }
+else:
+    # Fallback SQLite (développement uniquement)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True if 'neon.tech' in DATABASE_URL else False
-    )
-}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+# ═══════════════════════════════════════════════════════════
+# PASSWORD VALIDATION
+# ═══════════════════════════════════════════════════════════
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
+# ═══════════════════════════════════════════════════════════
+# INTERNATIONALIZATION
+# ═══════════════════════════════════════════════════════════
 
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Africa/Dakar"
 USE_I18N = True
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+# ═══════════════════════════════════════════════════════════
+# STATIC & MEDIA FILES
+# ═══════════════════════════════════════════════════════════
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# Media files
+# Whitenoise pour servir les fichiers statiques en production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# ═══════════════════════════════════════════════════════════
+# DEFAULT PRIMARY KEY
+# ═══════════════════════════════════════════════════════════
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Autoriser toutes les origines en développement
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:8000').split(',')
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r'^http://localhost:\d+$',
-    r'^http://127\.0\.0\.1:\d+$',
-]
+# ═══════════════════════════════════════════════════════════
+# CORS CONFIGURATION
+# ═══════════════════════════════════════════════════════════
 
-# REST Framework Configuration
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = os.getenv(
+        'CORS_ALLOWED_ORIGINS',
+        'https://pigeonmanager.vercel.app'
+    ).split(',')
+
+CORS_ALLOW_CREDENTIALS = True
+
+# ═══════════════════════════════════════════════════════════
+# REST FRAMEWORK
+# ═══════════════════════════════════════════════════════════
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',  # ← Ajouté pour l'interface
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -170,17 +206,23 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
 
-# JWT Configuration
+# ═══════════════════════════════════════════════════════════
+# JWT CONFIGURATION
+# ═══════════════════════════════════════════════════════════
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-# Swagger Configuration
+# ═══════════════════════════════════════════════════════════
+# SWAGGER / API DOCUMENTATION
+# ═══════════════════════════════════════════════════════════
+
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
@@ -192,17 +234,24 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,
     'JSON_EDITOR': True,
-    'SUPPORTED_SUBMIT_METHODS': [
-        'get',
-        'post',
-        'put',
-        'delete',
-        'patch'
-    ],
+    'SUPPORTED_SUBMIT_METHOD_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
 }
 
-# Debug Toolbar Configuration (uniquement en développement)
-# if DEBUG:
-#     INSTALLED_APPS += ['debug_toolbar']
-#     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-#     INTERNAL_IPS = ['127.0.0.1', 'localhost']
+# ═══════════════════════════════════════════════════════════
+# LOGGING (Production)
+# ═══════════════════════════════════════════════════════════
+
+if not DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+    }

@@ -2,13 +2,14 @@
 from django.db import models
 import uuid
 from django.utils import timezone
+from apps.core.ownership import OwnedModel
 
-class Cage(models.Model):
+class Cage(OwnedModel):
     """
     Modèle représentant une cage dans la volière
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    numero = models.CharField(max_length=10, unique=True, verbose_name="Numéro de cage")
+    numero = models.CharField(max_length=10,  verbose_name="Numéro de cage")
     nom = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nom")
     superficie = models.DecimalField(max_digits=5, decimal_places=2, default=1.0, verbose_name="Superficie (m²)")
     position_x = models.IntegerField(default=0, verbose_name="Position X (grille)")
@@ -22,6 +23,12 @@ class Cage(models.Model):
         verbose_name = "Cage"
         verbose_name_plural = "Cages"
         ordering = ['numero']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['owner', 'numero'],
+                name='uniq_numero_par_owner',
+            ),
+        ]
     
     def __str__(self):
         return f"Cage {self.numero}"
@@ -42,7 +49,7 @@ class Cage(models.Model):
         return self.occupations.filter(date_fin__isnull=True).first()
 
 
-class Occupation(models.Model):
+class Occupation(OwnedModel):
     """
     Modèle pour suivre l'occupation des cages (historique)
     """
@@ -71,7 +78,9 @@ class Occupation(models.Model):
             return f"{self.cage.numero} - Couple {self.couple.id}"
         return f"{self.cage.numero} - Libre"
     
+   
     def liberer(self):
-        """Libère la cage"""
-        self.date_fin = timezone.now()
-        self.save()
+        """Libérer la cage en mettant à jour la date_fin de l'occupation"""
+        if self.date_fin is None:
+            self.date_fin = timezone.now()
+            self.save(update_fields=['date_fin'])

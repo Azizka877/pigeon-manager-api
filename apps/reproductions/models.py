@@ -1,8 +1,9 @@
-# models
+# apps/reproductions/models.py
 from django.db import models
 import uuid
+from apps.core.ownership import OwnedModel
 
-class Reproduction(models.Model):
+class Reproduction(OwnedModel):
     """
     Modèle pour enregistrer les reproductions/naissances
     """

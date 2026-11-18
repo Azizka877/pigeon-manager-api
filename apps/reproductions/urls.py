@@ -3,8 +3,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
-router.register(r'reproductions', views.ReproductionViewSet, basename='api-reproductions')
-router.register(r'', views.ReproductionViewSet)
+router.register(r'', views.ReproductionViewSet, basename='api-reproductions')
 
 urlpatterns = [
     path('', include(router.urls)),

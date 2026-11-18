@@ -1,7 +1,9 @@
+# apps/sales/models.py
 from django.db import models
 import uuid
+from apps.core.ownership import OwnedModel
 
-class Sortie(models.Model):
+class Sortie(OwnedModel):
     """
     Modèle pour gérer les sorties des pigeons (vente, décès, perte)
     """
@@ -35,15 +37,4 @@ class Sortie(models.Model):
     def __str__(self):
         return f"{self.pigeon.matricule} - {self.get_type_sortie_display()} - {self.date_sortie}"
     
-    def save(self, *args, **kwargs):
-        """À la création d'une sortie, mettre à jour le statut du pigeon"""
-        super().save(*args, **kwargs)
-        
-        # Mettre à jour le statut du pigeon selon le type de sortie
-        if self.type_sortie == 'vente':
-            self.pigeon.statut = 'vendu'
-        elif self.type_sortie == 'deces':
-            self.pigeon.statut = 'mort'
-        elif self.type_sortie == 'perte':
-            self.pigeon.statut = 'perdu'
-        self.pigeon.save()
+    

@@ -1,9 +1,10 @@
-# models
+# apps/couples/models.py
 from django.db import models
 from django.core.exceptions import ValidationError
 import uuid
+from apps.core.ownership import OwnedModel
 
-class Couple(models.Model):
+class Couple(OwnedModel):
     """
     Modèle représentant un couple de pigeons
     """

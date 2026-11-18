@@ -1,9 +1,10 @@
-# models
+# apps/pigeons/models.py
 from django.db import models
 import uuid
 from django.utils import timezone
+from apps.core.ownership import OwnedModel
 
-class Pigeon(models.Model):
+class Pigeon(OwnedModel):
     """
     Modèle représentant un pigeon dans la volière
     """
@@ -20,7 +21,7 @@ class Pigeon(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    matricule = models.CharField(max_length=50, unique=True, verbose_name="Matricule (bague)")
+    matricule = models.CharField(max_length=50,  verbose_name="Matricule (bague)")
     sexe = models.CharField(max_length=1, choices=SEXE_CHOICES, verbose_name="Sexe")
     race = models.CharField(max_length=100, verbose_name="Race")
     date_naissance = models.DateField(verbose_name="Date de naissance")
@@ -50,6 +51,12 @@ class Pigeon(models.Model):
             models.Index(fields=['matricule']),
             models.Index(fields=['statut']),
             models.Index(fields=['sexe']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['owner', 'matricule'],
+                name='uniq_matricule_par_owner',
+            )
         ]
     
     def __str__(self):
