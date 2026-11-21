@@ -1,32 +1,55 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .serializers import UserSerializer
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .serializers import ChangePasswordSerializer, UserSerializer
+
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    Self-service du compte : un colombophile ne voit et ne modifie QUE son
+    propre compte. Les staffs (is_staff) conservent un accès complet au
+    registre pour le support — la promotion is_staff elle-même reste
+    réservée à l'admin Django (lecture seule dans le sérialiseur).
+    """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsAuthenticated])
+    # ── Verrou de sécurité n°1 : le queryset ne renvoie que soi-même ──
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.user.is_staff:
+            return qs
+        return qs.filter(pk=self.request.user.pk)
+
+    # ── Verrou n°2 (défense en profondeur) : un objet étranger → 403 ──
+    def get_object(self):
+        obj = super().get_object()
+        if obj != self.request.user and not self.request.user.is_staff:
+            self.permission_denied(self.request, message='Non autorisé')
+        return obj
+
+    # ── GET /api/users/me/ : profil de l'utilisateur connecté ──
+    @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='change_password', permission_classes=[IsAuthenticated])
+    # ── POST /api/users/{id}/change_password/ : soi-même uniquement ──
+    @action(detail=True, methods=['post'], url_path='change_password')
     def change_password(self, request, pk=None):
-        user = self.get_object()
-        old_password = request.data.get('old_password')
-        new_password = request.data.get('new_password')
+        user = self.get_object()  # verrouillé : le propriétaire (ou un staff)
+        serializer = ChangePasswordSerializer(data=request.data, context={'target': user})
+        serializer.is_valid(raise_exception=True)
 
-        if not user.check_password(old_password):
-            return Response({'detail': 'Mot de passe actuel incorrect'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user.set_password(new_password)
+        user.set_password(serializer.validated_data['new_password'])
         user.save()
         return Response({'detail': 'Mot de passe changé avec succès'})
 
+    # ── DELETE : filet de sécurité (déjà couvert par les verrous) ──
     def destroy(self, request, *args, **kwargs):
         user = self.get_object()
         if user != request.user and not request.user.is_staff:

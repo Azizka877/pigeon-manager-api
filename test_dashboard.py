@@ -22,7 +22,7 @@ import sys
 import urllib.error
 import urllib.request
 
-BASE = os.environ.get("PM_BASE", "http://127.0.0.1:8000")
+BASE = os.environ.get("PM_BASE", "http://127.0.0.1:8000").rstrip("/")
 
 STATS_PATHS = ["/api/dashboard/stats/", "/api/stats/"]
 ACTIVITES_PATHS = ["/api/dashboard/activites/?limit=5", "/api/activites/?limit=5"]
