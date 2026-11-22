@@ -44,3 +44,14 @@ urlpatterns = [
     path('api/users/', include('apps.users.urls')),
     path('api/', include('apps.dashboard.urls')), 
 ]
+
+
+# ── Génétique : pedigree PDF + simulation de couple (COI) ────────────────
+from apps.pigeons.pedigree_views import PedigreePDFView, SimulationCoupleView
+
+urlpatterns += [
+    path('api/pigeons/<uuid:pk>/pedigree/', PedigreePDFView.as_view(),
+         name='pedigree-pdf'),
+    path('api/genetique/simulation/', SimulationCoupleView.as_view(),
+         name='simulation-couple'),
+]
