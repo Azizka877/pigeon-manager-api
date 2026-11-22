@@ -20,6 +20,7 @@ class CageViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated, OwnerOnlyPermission]
     serializer_class = CageSerializer
+    queryset = Cage.objects.all()
 
     def get_queryset(self):
         base = super().get_queryset()

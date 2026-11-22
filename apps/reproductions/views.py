@@ -27,6 +27,7 @@ from .serializers import ReproductionSerializer
 class ReproductionViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, OwnerOnlyPermission]
     serializer_class = ReproductionSerializer
+    queryset = Reproduction.objects.all()
     filterset_fields = ['couple', 'date_ponte']
 
     def get_queryset(self):

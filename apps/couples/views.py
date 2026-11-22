@@ -14,7 +14,8 @@ from .serializers import CoupleSerializer
 class CoupleViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, OwnerOnlyPermission]
     serializer_class = CoupleSerializer
-
+    queryset = Couple.objects.all()
+    
     def get_queryset(self):
         qs = (
             super().get_queryset()

@@ -24,6 +24,7 @@ from .services import annuler_sortie, traiter_sortie
 class SortieViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, OwnerOnlyPermission]
     serializer_class = SortieSerializer
+    queryset = Sortie.objects.all()
     filterset_fields = ['type_sortie', 'date_sortie', 'pigeon']
 
     def get_queryset(self):

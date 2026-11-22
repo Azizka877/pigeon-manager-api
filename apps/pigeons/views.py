@@ -32,6 +32,7 @@ def _mini(pigeon):
 class PigeonViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, OwnerOnlyPermission]
     serializer_class = PigeonSerializer
+    queryset = Pigeon.objects.all()
     filterset_fields = ['statut', 'sexe', 'race']
     search_fields = ['matricule', 'race', 'couleur', 'notes']
     ordering_fields = ['created_at', 'date_naissance', 'matricule', 'statut']

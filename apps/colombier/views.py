@@ -9,6 +9,7 @@ from .serializers import ColombierConfigSerializer
 class ColombierConfigViewSet(viewsets.ModelViewSet):
     serializer_class = ColombierConfigSerializer
     permission_classes = [IsAuthenticated]
+    
 
     def get_queryset(self):
         """Retourne uniquement le colombier de l'utilisateur connecté"""
