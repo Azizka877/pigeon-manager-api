@@ -9,8 +9,13 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import dj_database_url
 
+
+
 # Charger les variables d'environnement
-load_dotenv()
+if os.getenv('ENV', 'dev') == 'dev':
+    load_dotenv('.env.local', override=True)
+else:
+    load_dotenv('.env')
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,6 +72,7 @@ INSTALLED_APPS = [
     'apps.colombier',
     'apps.core',
     'apps.dashboard',
+    'apps.sante',
 ]
 
 # ═══════════════════════════════════════════════════════════
@@ -181,6 +187,12 @@ else:
         'CORS_ALLOWED_ORIGINS',
         'https://pigeonmanager.vercel.app'
     ).split(',')
+
+    # Tous les sous-domaines Vercel du projet (production + deploiements de preview)
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r'^https://pigeon-manager-frontend.*\.vercel\.app$',
+        r'^https://pigeonmanager.*\.vercel\.app$',
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 
