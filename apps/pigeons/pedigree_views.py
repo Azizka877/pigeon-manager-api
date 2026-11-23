@@ -252,3 +252,36 @@ class SimulationCoupleView(APIView):
             'ancetres_communs': ancetres,
             'profondeur_analyse': analyse['profondeur_analyse'],
         })
+
+
+class CoiPigeonView(APIView):
+    """
+    GET /api/pigeons/{id}/coi/
+    -> COI du pigeon lui-meme (methode de Wright) + niveau.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        pigeon = Pigeon.objects.filter(
+            id=pk, owner=request.user, deleted_at__isnull=True,
+        ).first()
+        if pigeon is None:
+            return Response(
+                {'detail': "Pigeon introuvable dans votre colombier."},
+                status=404,
+            )
+        parents_connus = bool(pigeon.pere and pigeon.mere)
+        coi = consanguinite(pigeon)
+        if parents_connus:
+            niveau = classifier(coi)
+        else:
+            niveau = {'niveau_label': 'Non calculable', 'couleur': '#9ca3af'}
+        return Response({
+            'id': str(pigeon.id),
+            'matricule': pigeon.matricule,
+            'coi': coi,
+            'coi_pourcent': en_pourcent(coi),
+            'niveau_label': niveau['niveau_label'],
+            'couleur': niveau['couleur'],
+            'parents_connus': parents_connus,
+        })

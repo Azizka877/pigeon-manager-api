@@ -55,3 +55,12 @@ urlpatterns += [
     path('api/genetique/simulation/', SimulationCoupleView.as_view(),
          name='simulation-couple'),
 ]
+
+
+# -- Genetique : COI d'un pigeon precis -----------------------------------
+from apps.pigeons.pedigree_views import CoiPigeonView
+
+urlpatterns += [
+    path('api/pigeons/<uuid:pk>/coi/', CoiPigeonView.as_view(),
+         name='coi-pigeon'),
+]
