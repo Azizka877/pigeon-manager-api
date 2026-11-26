@@ -223,6 +223,7 @@ REST_FRAMEWORK = {
 # ═══════════════════════════════════════════════════════════
 
 SIMPLE_JWT = {
+    'UPDATE_LAST_LOGIN': True,
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False,
