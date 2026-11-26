@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -18,6 +19,20 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
+
+
+
+# --- Facturation : endpoints d'attente ---
+# L'API de facturation n'existe pas encore cote Django. Ces deux vues
+# renvoient des reponses vides honnetes : le frontend affiche son etat
+# "Aucun abonnement connecte" et la console n'a plus de 404.
+def billing_plan_stub(request):
+    return JsonResponse(None, safe=False)
+
+
+def billing_invoices_stub(request):
+    return JsonResponse({"results": [], "count": 0})
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,6 +57,8 @@ urlpatterns = [
     path('api/colombier/', include('apps.colombier.urls')),
     path('api/sante/', include('apps.sante.urls')),
     path('api/users/', include('apps.users.urls')),
+    path('api/billing/plan/', billing_plan_stub),
+    path('api/billing/invoices/', billing_invoices_stub),
     path('api/', include('apps.dashboard.urls')), 
 ]
 
